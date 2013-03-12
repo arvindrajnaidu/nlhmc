@@ -8,7 +8,7 @@ public class HMCGameServer extends NLGameServer {
 	
 	public HMCGameServer() {
 		super("HM");
-		this.msgProcesser = new HMCMessageProcessor();
+		this.msgProcesser = new HMCMessageProcessor(this.getGameType());
 		this.catLoader = new HMCCategoryLoader();
 	}
 }

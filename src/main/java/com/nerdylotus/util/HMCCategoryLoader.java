@@ -1,15 +1,15 @@
 package com.nerdylotus.util;
 
 
+import java.io.BufferedReader;
 import java.io.InputStream;
-import java.util.Properties;
+import java.io.InputStreamReader;
 
 import net.sf.json.JSONObject;
 
+import com.nerdylotus.core.NLFactory;
 import com.nerdylotus.core.NLPersistance;
-import com.nerdylotus.core.NLRedisPersistanceImpl;
 import com.nerdylotus.game.NLCategoryLoader;
-import com.nerdylotus.hmc.core.HMCGameConfig;
 
 public class HMCCategoryLoader implements NLCategoryLoader{
 	
@@ -18,27 +18,19 @@ public class HMCCategoryLoader implements NLCategoryLoader{
 	}
 	public void loadCategories() {
 		try{
-			Properties prop = new Properties();
-			InputStream in = HMCCategoryLoader.class.getClassLoader().getResourceAsStream("resources/categories.properties");
-			prop.load(in);
+			InputStream in = HMCCategoryLoader.class.getClassLoader().getResourceAsStream("categories.txt");			
+			BufferedReader input =  new BufferedReader(new InputStreamReader(in));
+	        String line = null; 
+	        NLPersistance nlp = NLFactory.getPersistance();
+	        while (( line = input.readLine()) != null){	 
+	        	JSONObject cnf = new JSONObject();
+	        	cnf.put("category", line);
+	        	cnf.put("minplayers", 1);
+	        	cnf.put("maxplayers", 5);
+		        nlp.addValueToKey("HM", cnf.toString());
+	        }			
 			in.close();
-	        NLPersistance nlp = NLRedisPersistanceImpl.getInstance();
-	        JSONObject allcategories = new JSONObject();
-	        for(Object key: prop.keySet()){	
-	        	String tempKey = (String) key;
-	        	String tempStr = (String)prop.get(key);
-	        	String[] sarr = tempStr.split(",");
-	        	HMCGameConfig cnf = new HMCGameConfig();
-	        	cnf.setWordcategory(sarr[0]);
-	        	cnf.setBuyin(Double.parseDouble(sarr[1]));
-	        	cnf.setLookup(tempKey);
-	        	cnf.setMaxplayers(Integer.parseInt(sarr[2]));
-	        	cnf.setMinplayers(Integer.parseInt(sarr[3]));	
-	        	JSONObject jcnf = JSONObject.fromObject(cnf);	
-	        	nlp.setValueForKey(tempKey, jcnf.toString());
-	        	allcategories.put(tempKey, jcnf);
-	        }
-	        nlp.setValueForKey("HM", allcategories.toString());
+			input.close();
         }catch(Exception e){
         	e.printStackTrace();
         }		

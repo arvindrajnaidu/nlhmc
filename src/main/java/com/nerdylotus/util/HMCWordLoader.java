@@ -6,8 +6,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import com.nerdylotus.core.NLFactory;
 import com.nerdylotus.core.NLPersistance;
-import com.nerdylotus.core.NLRedisPersistanceImpl;
 
 public class HMCWordLoader {
 
@@ -18,12 +18,12 @@ public class HMCWordLoader {
 	 */
 	public static void main(String[] args) {
 		try{
-			InputStream in = new FileInputStream(new File(args[0]));
+			InputStream in = HMCWordLoader.class.getClassLoader().getResourceAsStream("mvnames.txt");
 			BufferedReader input =  new BufferedReader(new InputStreamReader(in));
 	        String line = null; 
-	        NLPersistance nlp = NLRedisPersistanceImpl.getInstance();
-	        while (( line = input.readLine()) != null){	 
-	        	nlp.addValueToKey(args[1], line);
+	        NLPersistance nlp = NLFactory.getPersistance();
+	        while (( line = input.readLine()) != null){
+	        	nlp.addValueToKey("HOLLYWOOD", line);
 	        }
         }catch(Exception e){
         	e.printStackTrace();

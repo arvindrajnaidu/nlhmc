@@ -5,16 +5,17 @@ import java.util.Date;
 import net.sf.json.JSONObject;
 
 import com.nerdylotus.core.NLDelayedAction;
+import com.nerdylotus.core.NLFactory;
 import com.nerdylotus.core.NLGameMessageProcesser;
 import com.nerdylotus.core.NLGameUpdate;
-import com.nerdylotus.core.NLRedisPersistanceImpl;
+import com.nerdylotus.core.redis.NLRedisPersistanceImpl;
 import com.nerdylotus.game.NLGameStatus;
 import com.nerdylotus.hmc.game.HMCGame;
 import com.nerdylotus.hmc.game.HMCPlayer;
 
 public class HMCMessageProcessor extends NLGameMessageProcesser {
-	public HMCMessageProcessor() {
-		super();
+	public HMCMessageProcessor(String gameType) {
+		super(gameType);
 		this.serializer = new HMCGameSerializer();
 	} 
 	
@@ -40,11 +41,12 @@ public class HMCMessageProcessor extends NLGameMessageProcesser {
 				HMCPlayer player = new HMCPlayer(user);
 				Double points = -1.0;
 				if(!player.isGuest()){
-					points = NLRedisPersistanceImpl.getInstance().getValueForMemberInSet(game.getScope() + "-points", user);
+					
+					points = NLFactory.getPersistance().getBalanceForMemberInScope(game.getScope() + "-points", user);
 					if(points == null){
 						// Read default points off a props file
 						points = 10000.0;	
-						NLRedisPersistanceImpl.getInstance().setValueForMemberInSet(game.getScope() + "-points", user, points);
+						NLFactory.getPersistance().setBalanceForMemberInScope(game.getScope() + "-points", user, points);
 					}					
 				}
 				player.setBalance(points);
@@ -54,7 +56,7 @@ public class HMCMessageProcessor extends NLGameMessageProcesser {
 			// Setup would have changed the balances according to the fees. Update to redis
 			for(String plyrname: game.getPlayers().keySet()){
 				HMCPlayer plyr = (HMCPlayer)game.getPlayers().get(plyrname);
-				NLRedisPersistanceImpl.getInstance().setValueForMemberInSet(game.getScope() + "-points", plyrname, plyr.getBalance());
+				NLFactory.getPersistance().setBalanceForMemberInScope(game.getScope() + "-points", plyrname, plyr.getBalance());
 			}						
 			update = new NLGameUpdate("dealt", game);
 			if(game.isTimeouts()){
@@ -79,7 +81,7 @@ public class HMCMessageProcessor extends NLGameMessageProcesser {
 							Double winnings = game.getPot();
 							game.setMessage("Winner takes $ " + winnings + ".");
 							if(!tempPlayer.isGuest()){
-								Double newBalance = NLRedisPersistanceImpl.getInstance().incrementBy(game.getScope() + "-points" , 
+								Double newBalance = NLFactory.getPersistance().incrementBalanceOfMemberInScopeBy(game.getScope() + "-points" , 
 										game.getTurn(), winnings);
 								tempPlayer.setBalance(newBalance);
 							}
@@ -93,7 +95,7 @@ public class HMCMessageProcessor extends NLGameMessageProcesser {
 						}
 					}else{
 //						if(!tempPlayer.isGuest()){
-//							Double newBalance = NLRedisPersistanceImpl.getInstance().incrementBy(game.getScope() + "-points" , 
+//							Double newBalance = NLFactory.getPersistance().incrementBy(game.getScope() + "-points" , 
 //									game.getTurn(), -1 * game.penalty(alphabet));
 //							tempPlayer.setBalance(newBalance);						
 //							game.setPot(game.getPot() + game.penalty(alphabet));
@@ -109,11 +111,11 @@ public class HMCMessageProcessor extends NLGameMessageProcesser {
 					HMCPlayer player = new HMCPlayer(username);
 					Double points = -1.0;
 					if(!player.isGuest()){
-						points = NLRedisPersistanceImpl.getInstance().getValueForMemberInSet(game.getScope() + "-points", username);
+						points = NLFactory.getPersistance().getBalanceForMemberInScope(game.getScope() + "-points", username);
 						if(points == null){
 							// Read default points off a props file
 							points = 10000.0;	
-							NLRedisPersistanceImpl.getInstance().setValueForMemberInSet(game.getScope() + "-points", username, points);
+							NLFactory.getPersistance().setBalanceForMemberInScope(game.getScope() + "-points", username, points);
 						}					
 					}										
 					player.setBalance(points);
